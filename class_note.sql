@@ -398,6 +398,25 @@ ORDER BY salary_year_avg ASC;
 
 --find top 5 skills for remote data analyst jobs--
 
-
+select
+    
+    job_title_short,
+    job_location,
+    salary_year_avg,
+    job_via,
+    job_posted_date:: DATE
+from (
+    select *
+    from january_jobs
+    UNION ALL
+    select *
+    from february_jobs
+    UNION ALL
+    select *
+    from march_jobs
+) as first_quarter_jobs
+where salary_year_avg > 70000 and 
+job_title_short = 'Data Scientist'
+ORDER BY salary_year_avg ASC;
 
 
