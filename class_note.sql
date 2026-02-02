@@ -396,6 +396,7 @@ where salary_year_avg > 70000 and
 job_title_short = 'Data Analyst'
 ORDER BY salary_year_avg ASC;
 
+--find top 5 skills for remote data analyst jobs--
 
 
 
