@@ -462,15 +462,15 @@ INNER JOIN skills_dim
   ON skills_job_dim.skill_id = skills_dim.skill_id
 ORDER BY salary_year_avg DESC;
 
-[
-  {
-    "job_id": 552322,
-    "job_title": "Associate Director- Data Insights",
-    "company_name": "AT&T",
-    "job_schedule_type": "Full-time",
-    "salary_year_avg": "255829.5",
-    "skills": "sql"
-  },
+-- [
+--   {
+--     "job_id": 552322,
+--     "job_title": "Associate Director- Data Insights",
+--     "company_name": "AT&T",
+--     "job_schedule_type": "Full-time",
+--     "salary_year_avg": "255829.5",
+--     "skills": "sql"
+--   },
   {
     "job_id": 552322,
     "job_title": "Associate Director- Data Insights",
@@ -991,4 +991,34 @@ ORDER BY salary_year_avg DESC;
     "salary_year_avg": "184000.0",
     "skills": "r"
   }
-]
+-- ]
+
+with remote_job_skills AS (
+select 
+        skills_to_job.skill_id,
+    count (*) as total_remote_jobs
+    from skills_job_dim as skills_to_job
+    inner join job_postings_fact as job_postings
+        ON skills_to_job.job_id = job_postings.job_id
+        where job_postings.job_work_from_home = true and 
+        job_postings.job_title_short ='Data Analyst'
+group by skills_to_job.skill_id)
+select 
+    skills.skill_id,
+    skills.skills,
+    remote_job_skills.total_remote_jobs as remote_data_analyst_jobs
+from skills_dim as skills
+INNER JOIN remote_job_skills
+  ON skills.skill_id = remote_job_skills.skill_id
+order by remote_job_skills.total_remote_jobs DESC
+LIMIT 5;
+
+--top demand skills--
+
+select *
+from job_postings_fact
+INNER join skills_job_dim
+  on skills_job_dim.job_id = job_postings_fact.job_id
+INNER JOIN skills_dim
+  ON skills_job_dim.skill_id = skills_dim.skill_id
+limit 10;
