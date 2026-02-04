@@ -1015,10 +1015,80 @@ LIMIT 5;
 
 --top demand skills--
 
-select *
+select 
+    skills_dim.skills,
+    count(skills_job_dim.job_id) as demand_count, 
+    job_postings_fact.job_title
 from job_postings_fact
 INNER join skills_job_dim
   on skills_job_dim.job_id = job_postings_fact.job_id
 INNER JOIN skills_dim
   ON skills_job_dim.skill_id = skills_dim.skill_id
-limit 10;
+  Where job_postings_fact.job_title_short = 'Data Analyst' AND
+        job_postings_fact.job_work_from_home = true
+  group by skills_dim.skills,job_postings_fact.job_title
+  order by demand_count DESC
+limit 50;
+
+--top skills based on salary--
+
+select 
+    skills_dim.skills,
+    round(avg(job_postings_fact.salary_year_avg),2) as avg_salary, 
+    job_postings_fact.job_title
+from job_postings_fact
+INNER join skills_job_dim
+  on skills_job_dim.job_id = job_postings_fact.job_id
+INNER JOIN skills_dim
+  ON skills_job_dim.skill_id = skills_dim.skill_id
+  Where 
+        job_postings_fact.job_work_from_home = true and 
+        job_postings_fact.salary_year_avg IS NOT NULL
+  group by skills_dim.skills,job_postings_fact.job_title
+  order by avg_salary DESC
+limit 50;
+
+-- demand vs salary --
+
+with skills_demand AS (
+  select 
+      skills_dim.skill_id,
+      skills_dim.skills,
+      count(skills_job_dim.job_id) as demand_count 
+  from job_postings_fact
+  INNER join skills_job_dim
+    on skills_job_dim.job_id = job_postings_fact.job_id
+  INNER JOIN skills_dim
+    ON skills_job_dim.skill_id = skills_dim.skill_id
+    Where 
+          job_postings_fact.job_work_from_home = true AND
+          job_postings_fact.salary_year_avg IS NOT NULL
+    group by skills_dim.skill_id
+    ), average_skills_salary AS (
+    select 
+      skills_dim.skill_id,
+      skills_dim.skills,
+      round(avg(job_postings_fact.salary_year_avg),3) as avg_salary
+    from job_postings_fact
+  INNER join skills_job_dim
+    on skills_job_dim.job_id = job_postings_fact.job_id
+  INNER JOIN skills_dim
+    ON skills_job_dim.skill_id = skills_dim.skill_id
+    Where 
+          job_postings_fact.job_work_from_home = true and 
+          job_postings_fact.salary_year_avg IS NOT NULL
+    group by skills_dim.skill_id
+    )
+select 
+  skills_demand.skill_id,
+  skills_demand.skills,
+  skills_demand.demand_count,
+  average_skills_salary.avg_salary
+from skills_demand
+INNER JOIN average_skills_salary
+  ON skills_demand.skill_id = average_skills_salary.skill_id
+  where skills_demand.demand_count >= 5
+order by 
+
+average_skills_salary.avg_salary DESC,
+skills_demand.demand_count DESC
