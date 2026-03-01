@@ -454,12 +454,13 @@ job_location = 'Anywhere'
 ORDER BY salary_year_avg DESC
 LIMIT 10) 
 select top_paying_data_analyst_jobs.*,
-skills_dim.skills
+Upper(skills_dim.skills) as skills
 from top_paying_data_analyst_jobs
 INNER join skills_job_dim
   on top_paying_data_analyst_jobs.job_id = skills_job_dim.job_id
 INNER JOIN skills_dim
   ON skills_job_dim.skill_id = skills_dim.skill_id
+  where salary_year_avg > 200000
 ORDER BY salary_year_avg DESC;
 
 -- [
