@@ -311,21 +311,24 @@ SELECT dem.first_name, dem.last_name, gender, salary, sum(salary) over(partition
 FROM parks_and_recreation.employee_demographics as dem
 inner join parks_and_recreation.employee_salary as sal
 	on sal.employee_id = dem.employee_id; 
-
-SELECT dem.first_name, dem.last_name, gender, salary, sum(salary) over(ORDER BY sal.employee_id) as rolling_total
-FROM parks_and_recreation.employee_demographics as dem
-inner join parks_and_recreation.employee_salary as sal
-	on sal.employee_id = dem.employee_id; 
-
-SELECT dem.first_name, dem.last_name, gender, salary, sum(salary) over(order by dem.last_name,dem.first_name) as rolling_total
-FROM parks_and_recreation.employee_demographics as dem
-inner join parks_and_recreation.employee_salary as sal
-	on sal.employee_id = dem.employee_id; 
-
+    
 SELECT dem.first_name, dem.last_name, gender, salary,
 row_number() over(partition by gender) as rows_ranking
 FROM parks_and_recreation.employee_demographics as dem
 inner join parks_and_recreation.employee_salary as sal
 	on sal.employee_id = dem.employee_id; 
     
-    
+SELECT dem.first_name, dem.last_name, gender, salary,
+row_number() over(partition by gender order by salary) as rows_num,
+rank() over(partition by gender order by salary) as rows_ranking
+FROM parks_and_recreation.employee_demographics as dem
+inner join parks_and_recreation.employee_salary as sal
+	on sal.employee_id = dem.employee_id; 
+  
+SELECT dem.first_name, dem.last_name, gender, salary,
+row_number() over(partition by gender order by salary) as rows_num,
+rank() over(partition by gender order by salary) as rows_ranking,
+dense_rank() over(partition by gender order by salary) as rows_ranking
+FROM parks_and_recreation.employee_demographics as dem
+inner join parks_and_recreation.employee_salary as sal
+	on sal.employee_id = dem.employee_id;     
