@@ -306,19 +306,19 @@ SELECT dem.first_name, dem.last_name, gender, sum(salary) over(partition by gend
 FROM parks_and_recreation.employee_demographics as dem
 inner join parks_and_recreation.employee_salary as sal
 	on sal.employee_id = dem.employee_id; 
---once order by then it can be rolling total?
+
 SELECT dem.first_name, dem.last_name, gender, salary, sum(salary) over(partition by gender order by sal.employee_id) as rolling_total
 FROM parks_and_recreation.employee_demographics as dem
 inner join parks_and_recreation.employee_salary as sal
 	on sal.employee_id = dem.employee_id; 
     
 SELECT dem.first_name, dem.last_name, gender, salary,
-row_number() over(partition by gender) as rows_ranking
+row_number() over(partition by gender order by dem.last_name, dem.first_name) as rows_ranking
 FROM parks_and_recreation.employee_demographics as dem
 inner join parks_and_recreation.employee_salary as sal
 	on sal.employee_id = dem.employee_id; 
-    
-SELECT dem.first_name, dem.last_name, gender, salary,
+ 
+ SELECT dem.first_name, dem.last_name, gender, salary,
 row_number() over(partition by gender order by salary) as rows_num,
 rank() over(partition by gender order by salary) as rows_ranking
 FROM parks_and_recreation.employee_demographics as dem
@@ -332,8 +332,8 @@ dense_rank() over(partition by gender order by salary) as rows_ranking
 FROM parks_and_recreation.employee_demographics as dem
 inner join parks_and_recreation.employee_salary as sal
 	on sal.employee_id = dem.employee_id; 
- 
---ctes --实现递归，突破查询极限 -- don't understand this part yet
+    
+    --ctes --实现递归，突破查询极限 -- don't understand this part yet
 
 with cte_example as 
 (
@@ -383,4 +383,110 @@ inner join parks_and_recreation.employee_salary as sal
 group by gender
 )
 select *
-from cte_example;    
+from cte_example;   
+
+--temporary tables --
+create temporary table temp_table
+(first_name varchar(50), 
+last_name varchar(50), 
+favorate_movie varchar(100)
+);
+select *
+from temp_table;
+insert into temp_table (first_name, last_name, favorate_movie )
+values
+('Frank', 'Wei', 'Godfather'), 
+('Ray', 'Wei', 'The Wild Robot'), 
+('Kay', 'Wei', 'Demon Hunter'),
+('Jay', 'Yuan', 'It"s is a Wonderful Life'); 
+truncate table temp_table
+
+create temporary table salary_over_50k
+select *
+from employee_salary
+where salary >=50000;
+select*
+from salary_over_50k
+
+--stored procedures --
+create procedure salary_over_50k()
+select *
+from employee_salary
+where salary >=50000;
+
+call salary_over_50k();
+
+delimiter $$
+create procedure salary2_over_50k()
+begin
+	select *
+	from employee_salary
+	where salary >=50000;
+	select *
+	from employee_salary
+	where dept_id = 1;
+end $$
+delimiter ;
+
+CALL  salary2_over_50k()
+
+--parameters, there should be a whole lot more behind this--
+delimiter $$
+create procedure salary3_over_50k(p_employee_id INT)
+begin
+	select salary
+	from employee_salary
+	where employee_id=p_employee_id;
+end $$
+delimiter ;
+
+call salary3_over_50k(5); 
+
+--trigger and events --
+
+select first_name, last_name, 'Senior Woman' as layoff_group
+from employee_demographics 
+
+select first_name, last_name,  'High Pay' as layoff_group
+from employee_salary
+
+delimiter $$
+create trigger employee_insert
+	after insert on employee_salary
+    for each row
+begin
+insert into employee_demographics (employee_id, first_name, last_name)
+values (new.employee_id, new.first_name, new.last_name);
+end $$
+delimiter ;
+
+--for existing difference, this will not help--
+insert into employee_salary (employee_id, first_name, last_name, occupation, salary, dept_id)
+values(2, Ron, Swanson, 'Director of Parks and Recreation', 70000, 1)
+
+--for new employees in the employee_salary table, this triggers the change in the employee_demographics table--
+insert into employee_salary (employee_id, first_name, last_name, occupation, salary, dept_id)
+values(13, 'Jean-Ralphio', 'Saperstein', 'Exntertainment 720 CEO', 1000000, null)
+
+insert into employee_salary (employee_id, first_name, last_name, occupation, salary, dept_id)
+values(14, 'LT', 'Saperstein', 'Blue Owl CFO', 700000, null); 
+
+delimiter $$
+create event delete_retirees
+on schedule every 24 MINUTE
+do 
+begin
+	delete 
+	from employee_demographics 
+    where age >= 60; 
+end $$
+delimiter ;;
+
+DROP EVENT delete_retirees;
+show events
+
+--data cleaning--
+
+show triggers
+drop trigger employee_insert
+show variables like 'event%'
