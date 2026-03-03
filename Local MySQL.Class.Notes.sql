@@ -306,7 +306,7 @@ SELECT dem.first_name, dem.last_name, gender, sum(salary) over(partition by gend
 FROM parks_and_recreation.employee_demographics as dem
 inner join parks_and_recreation.employee_salary as sal
 	on sal.employee_id = dem.employee_id; 
-
+--once order by then it can be rolling total?
 SELECT dem.first_name, dem.last_name, gender, salary, sum(salary) over(partition by gender order by sal.employee_id) as rolling_total
 FROM parks_and_recreation.employee_demographics as dem
 inner join parks_and_recreation.employee_salary as sal
@@ -331,4 +331,56 @@ rank() over(partition by gender order by salary) as rows_ranking,
 dense_rank() over(partition by gender order by salary) as rows_ranking
 FROM parks_and_recreation.employee_demographics as dem
 inner join parks_and_recreation.employee_salary as sal
-	on sal.employee_id = dem.employee_id;     
+	on sal.employee_id = dem.employee_id; 
+ 
+--ctes --实现递归，突破查询极限 -- don't understand this part yet
+
+with cte_example as 
+(
+SELECT gender, avg(salary), max(salary),min(salary),count(salary)
+FROM parks_and_recreation.employee_demographics as dem
+inner join parks_and_recreation.employee_salary as sal
+	on sal.employee_id = dem.employee_id
+group by gender
+)
+select *
+from cte_example;  
+
+with cte_example as 
+(
+SELECT gender, avg(salary) as avg_sal, max(salary) as max_sal, min(salary) as min_sal, count(salary) as count_sal
+FROM parks_and_recreation.employee_demographics as dem
+inner join parks_and_recreation.employee_salary as sal
+	on sal.employee_id = dem.employee_id
+group by gender
+)
+select avg(avg_sal)
+from cte_example; 
+
+with cte_example as 
+(
+SELECT employee_id, gender, birth_date
+FROM parks_and_recreation.employee_demographics as dem
+where birth_date > '1985-01-01'
+), 
+cte_example2 as 
+(
+select employee_id, salary
+from employee_salary
+where salary > 50000
+)
+select * 
+from cte_example
+join cte_example2
+on cte_example.employee_id = cte_example2.employee_id
+
+with cte_example (Gender, Avg_sal, Max_sal, Min_sal, Count_sal) as 
+(
+SELECT gender, avg(salary), max(salary), min(salary), count(salary)
+FROM parks_and_recreation.employee_demographics as dem
+inner join parks_and_recreation.employee_salary as sal
+	on sal.employee_id = dem.employee_id
+group by gender
+)
+select *
+from cte_example;    
