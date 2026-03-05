@@ -1,3 +1,5 @@
+variables * from employee_salary; 
+ 
 select 
 first_name, 
 last_name, 
@@ -406,7 +408,7 @@ select *
 from employee_salary
 where salary >=50000;
 select*
-from salary_over_50k
+from salary_over_50ksalary_over_50k`salary_over_50k`
 
 --stored procedures --
 create procedure salary_over_50k()
